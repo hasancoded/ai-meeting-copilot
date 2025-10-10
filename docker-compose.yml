@@ -1,0 +1,71 @@
+# FILE: docker-compose.yml
+version: "3.8"
+
+services:
+  # PostgreSQL database (production)
+  db:
+    image: postgres:16-alpine
+    container_name: meeting-copilot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: meeting_copilot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meeting-copilot-server
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/meeting_copilot
+      AI_PROVIDER: ${AI_PROVIDER:-stub}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      TRANSCRIBE_PROVIDER: ${TRANSCRIBE_PROVIDER:-stub}
+    volumes:
+      - ./server/uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4000/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  default:
+    name: meeting-copilot-network
+# Commit message: chore(docker): add docker-compose for production deployment
+# PR title: chore: Add docker-compose with PostgreSQL and server
+# Notes: Defines PostgreSQL 16 service with persistent volume. Server service depends on DB health check. Environment variables configurable via .env file. Uploads directory mounted as volume. Health checks for both services. Use DB_PASSWORD and JWT_SECRET in production .env file.

@@ -1,0 +1,33 @@
+# FILE: .dockerignore
+# Global ignores
+.git
+.gitignore
+*.md
+*.log
+.DS_Store
+
+# Node / TypeScript build artifacts
+node_modules
+dist
+coverage
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Local dev DB files
+dev.db
+dev.db-journal
+
+# Uploads except placeholder
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Frontend artifacts
+web/node_modules
+web/dist
+
+# Commit message: chore(docker): add .dockerignore for efficient builds
+# PR title: chore: Add .dockerignore to optimize Docker builds
+# Notes: Excludes node_modules, build artifacts, logs, environment files, and dev database from Docker context. Keeps uploads/.gitkeep for directory structure.
