@@ -23,54 +23,60 @@ The AI Meeting Copilot follows a modern three-tier architecture with clear separ
 
 ```mermaid
 graph TB
-    subgraph "Client Layer"
-        UI[React Frontend<br/>Vite + TailwindCSS]
+    subgraph Client["Client Layer"]
+        UI["React Frontend<br/>Vite + TailwindCSS"]
     end
 
-    subgraph "API Layer"
-        API[Express REST API<br/>JWT Auth + CORS]
-        Auth[Auth Middleware<br/>JWT Validation]
-        Routes[Route Handlers<br/>Zod Validation]
+    subgraph API["API Layer"]
+        REST["Express REST API<br/>JWT Auth + CORS"]
+        AuthMW["Auth Middleware<br/>JWT Validation"]
+        RouteH["Route Handlers<br/>Zod Validation"]
     end
 
-    subgraph "Service Layer"
-        AIService[AI Service<br/>Provider Pattern]
-        TranscribeService[Transcription Service<br/>Provider Pattern]
-        FileService[File Handler<br/>Multer + Cleanup]
+    subgraph Service["Service Layer"]
+        AISvc["AI Service<br/>Provider Pattern"]
+        TransSvc["Transcription Service<br/>Provider Pattern"]
+        FileSvc["File Handler<br/>Multer + Cleanup"]
     end
 
-    subgraph "Data Layer"
-        Prisma[Prisma ORM<br/>Type-Safe Queries]
-        DB[(Database<br/>SQLite/PostgreSQL)]
+    subgraph Data["Data Layer"]
+        ORM["Prisma ORM<br/>Type-Safe Queries"]
+        Database[("Database<br/>SQLite/PostgreSQL")]
     end
 
-    subgraph "External Services"
-        OpenAI[OpenAI API<br/>GPT-4o-mini + Whisper]
-        Gemini[Google Gemini<br/>1.5 Flash]
+    subgraph External["External Services"]
+        OpenAI["OpenAI API<br/>GPT-4o + Whisper"]
+        Gemini["Google Gemini<br/>1.5 Flash"]
     end
 
-    UI -->|HTTP/JSON| API
-    API --> Auth
-    Auth --> Routes
-    Routes --> AIService
-    Routes --> TranscribeService
-    Routes --> FileService
-    Routes --> Prisma
+    UI -->|HTTP/JSON| REST
+    REST --> AuthMW
+    AuthMW --> RouteH
+    RouteH --> AISvc
+    RouteH --> TransSvc
+    RouteH --> FileSvc
+    RouteH --> ORM
 
-    AIService -.->|API Calls| OpenAI
-    AIService -.->|API Calls| Gemini
-    TranscribeService -.->|API Calls| OpenAI
-    TranscribeService -.->|API Calls| Gemini
+    AISvc -.->|API| OpenAI
+    AISvc -.->|API| Gemini
+    TransSvc -.->|API| OpenAI
+    TransSvc -.->|API| Gemini
 
-    Prisma -->|SQL| DB
-    FileService -->|Read/Write| Storage[File System<br/>uploads/]
+    ORM -->|SQL| Database
+    FileSvc -->|I/O| Storage["File System<br/>uploads/"]
 
-    style UI fill:#e1f5ff
-    style API fill:#fff4e1
-    style Prisma fill:#f0e1ff
-    style DB fill:#f0e1ff
-    style OpenAI fill:#e8f5e9
-    style Gemini fill:#e8f5e9
+    style UI fill:#4A90E2,stroke:#2E5C8A,stroke-width:2px,color:#fff
+    style REST fill:#F5A623,stroke:#C17D11,stroke-width:2px,color:#fff
+    style AuthMW fill:#F5A623,stroke:#C17D11,stroke-width:2px,color:#fff
+    style RouteH fill:#F5A623,stroke:#C17D11,stroke-width:2px,color:#fff
+    style AISvc fill:#7ED321,stroke:#5FA319,stroke-width:2px,color:#fff
+    style TransSvc fill:#7ED321,stroke:#5FA319,stroke-width:2px,color:#fff
+    style FileSvc fill:#7ED321,stroke:#5FA319,stroke-width:2px,color:#fff
+    style ORM fill:#BD10E0,stroke:#8B0AA8,stroke-width:2px,color:#fff
+    style Database fill:#BD10E0,stroke:#8B0AA8,stroke-width:2px,color:#fff
+    style OpenAI fill:#50E3C2,stroke:#3AB39A,stroke-width:2px,color:#fff
+    style Gemini fill:#50E3C2,stroke:#3AB39A,stroke-width:2px,color:#fff
+    style Storage fill:#9013FE,stroke:#6B0EBE,stroke-width:2px,color:#fff
 ```
 
 ### Key Design Patterns
@@ -295,8 +301,8 @@ docker-compose logs -f server
 ```
 ai-meeting-copilot/
 ├── docs/
-│   ├── API.md                      # Complete API reference
-│   └── DETAILED_GUIDE.md           # Comprehensive technical guide
+│   ├── API.md                                  # Complete API reference
+│   └── DETAILED_GUIDE.md                       # Comprehensive technical guide
 ├── server/
 │   ├── prisma/
 │   │   ├── migrations/
