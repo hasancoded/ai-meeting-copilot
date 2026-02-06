@@ -393,23 +393,3 @@ describe("Meeting Routes", () => {
     });
   });
 });
-
-// Commit message: test(meetings): add comprehensive meeting route tests
-// PR title: test: Add meeting tests with upload and process flows
-// Notes: Tests all meeting endpoints including list, create, upload, process, and detail. Verifies authentication, validation, file handling, and user isolation. Uses stub providers for deterministic testing. Includes helper functions for auth and test file creation.
-
-// Commit message: fix(tests): correct cookie header type handling in meeting tests
-// PR title: fix: Handle set-cookie header type correctly in meeting tests
-// Notes: Fixed type conversion error in createAuthUser helper by properly checking if set-cookie is array before processing. This prevents type assertion errors.
-
-// Commit message: fix(tests): improve file cleanup and path normalization in tests
-// PR title: fix: Handle cross-platform paths in meeting tests
-//Notes: Normalized paths in test assertions for Windows/Linux compatibility. Improved file cleanup to handle moved/deleted files. Added unique timestamps to test audio files to prevent collisions.
-
-// Commit message: fix(tests): handle upload auth test without .expect()
-// PR title: fix: Change upload auth test to avoid ECONNRESET
-// Notes: Changed "should require authentication" test to not use .expect() chaining, which was causing ECONNRESET. Instead, we await the response and assert on status explicitly. This prevents the connection error when multer tries to process files without authentication.
-
-// Commit message: fix(tests): revert upload auth test to use .expect()
-// PR title: fix: Simplify upload auth test expectations
-// Notes: Reverted to using .expect(401) for upload authentication test. The requireAuth middleware properly handles this case now.

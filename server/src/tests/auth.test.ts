@@ -121,7 +121,7 @@ describe("Authentication Routes", () => {
       const cookies = response.headers["set-cookie"];
       const cookieArray = Array.isArray(cookies) ? cookies : [cookies];
       expect(cookieArray.some((cookie) => cookie.startsWith("token="))).toBe(
-        true
+        true,
       );
     });
 
@@ -175,7 +175,7 @@ describe("Authentication Routes", () => {
       const cookies = response.headers["set-cookie"];
       const cookieArray = Array.isArray(cookies) ? cookies : [cookies];
       const tokenCookie = cookieArray.find((cookie) =>
-        cookie.startsWith("token=")
+        cookie.startsWith("token="),
       );
       expect(tokenCookie).toBeDefined();
       expect(tokenCookie).toContain("HttpOnly");
@@ -194,29 +194,13 @@ describe("Authentication Routes", () => {
       expect(cookies).toBeDefined();
       const cookieArray = Array.isArray(cookies) ? cookies : [cookies];
       const tokenCookie = cookieArray.find((cookie) =>
-        cookie.startsWith("token=")
+        cookie.startsWith("token="),
       );
       expect(tokenCookie).toBeDefined();
       // Cookie should be expired or empty
       expect(
-        tokenCookie?.includes("token=;") || tokenCookie?.includes("Max-Age=0")
+        tokenCookie?.includes("token=;") || tokenCookie?.includes("Max-Age=0"),
       ).toBe(true);
     });
   });
 });
-
-// Commit message: test(auth): add comprehensive auth route tests
-// PR title: test: Add authentication tests with coverage
-// Notes: Tests register (success, duplicate email, validation), login (success, wrong password, non-existent user), and logout. Verifies JWT cookies are set correctly with httpOnly flag. Uses supertest for HTTP assertions.
-
-// Commit message: fix(tests): correct cookie header type handling in auth tests
-// PR title: fix: Handle set-cookie header type correctly in tests
-//Notes: Fixed type conversion error by properly checking if set-cookie is array before casting. Supertest returns set-cookie as string | string[] depending on Express version, so we normalize it to array.
-
-// Commit message: fix(tests): use beforeAll for login test user creation
-// PR title: fix: Prevent database cleanup from interfering with login tests
-// Notes: Changed from beforeEach to beforeAll in login tests to create user once before all tests in that suite. This prevents the global beforeEach cleanup from deleting the user before login tests run.
-
-// Commit message: fix(tests): revert to beforeEach for login test user
-// PR title: fix: Create login user in beforeEach to work with global cleanup
-// Notes: Reverted back to beforeEach for creating login test user. This works with the global beforeEach cleanup that runs before each test.

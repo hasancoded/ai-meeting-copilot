@@ -1,6 +1,7 @@
 {
   "name": "ai-meeting-copilot",
   "version": "1.0.0",
+  "description": "AI-powered meeting assistant that transcribes audio/video files, generates summaries, extracts action items, and builds a searchable knowledge base",
   "private": true,
   "workspaces": [
     "server",
@@ -9,8 +10,26 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "keywords": [
+    "ai",
+    "meeting-assistant",
+    "transcription",
+    "summarization",
+    "nodejs",
+    "express",
+    "react",
+    "typescript",
+    "prisma",
+    "gemini-ai",
+    "openai",
+    "whisper",
+    "productivity",
+    "saas"
+  ],
+  "author": "hasancoded",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hasancoded/ai-meeting-copilot.git"
+  }
 }

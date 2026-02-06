@@ -11,7 +11,7 @@ export class OpenAIProvider implements AIProvider {
   constructor() {
     if (!env.OPENAI_API_KEY) {
       console.warn(
-        "OPENAI_API_KEY not set. AI summarization will fail. Set AI_PROVIDER=stub for development."
+        "OPENAI_API_KEY not set. AI summarization will fail. Set AI_PROVIDER=stub for development.",
       );
     }
     this.apiKey = env.OPENAI_API_KEY || "";
@@ -30,7 +30,7 @@ export class OpenAIProvider implements AIProvider {
   }): Promise<AIOutputs> {
     if (!this.apiKey) {
       throw new Error(
-        "OPENAI_API_KEY is required for AI summarization. Set AI_PROVIDER=stub to use development mode."
+        "OPENAI_API_KEY is required for AI summarization. Set AI_PROVIDER=stub to use development mode.",
       );
     }
 
@@ -88,7 +88,7 @@ Transcript: ${transcript}`;
             // Rate limit - retry with backoff
             if (attempt < this.maxRetries) {
               console.warn(
-                `Rate limited by OpenAI (attempt ${attempt}/${this.maxRetries}). Retrying...`
+                `Rate limited by OpenAI (attempt ${attempt}/${this.maxRetries}). Retrying...`,
               );
               await this.sleep(this.retryDelay * attempt);
               continue;
@@ -98,7 +98,7 @@ Transcript: ${transcript}`;
             // Server error - retry
             if (attempt < this.maxRetries) {
               console.warn(
-                `OpenAI server error (attempt ${attempt}/${this.maxRetries}). Retrying...`
+                `OpenAI server error (attempt ${attempt}/${this.maxRetries}). Retrying...`,
               );
               await this.sleep(this.retryDelay * attempt);
               continue;
@@ -107,7 +107,7 @@ Transcript: ${transcript}`;
           }
 
           throw new Error(
-            `OpenAI API call failed: ${resp.status} ${errorText}`
+            `OpenAI API call failed: ${resp.status} ${errorText}`,
           );
         }
 
@@ -158,7 +158,7 @@ Transcript: ${transcript}`;
         // Retry on network/transient errors
         if (attempt < this.maxRetries) {
           console.warn(
-            `AI request failed (attempt ${attempt}/${this.maxRetries}): ${error.message}`
+            `AI request failed (attempt ${attempt}/${this.maxRetries}): ${error.message}`,
           );
           await this.sleep(this.retryDelay * attempt);
         }
@@ -169,7 +169,3 @@ Transcript: ${transcript}`;
     throw lastError || new Error("Failed to get AI response after retries");
   }
 }
-
-// Commit message: feat(ai): add retry logic and improved error handling
-// PR title: feat: Enhance OpenAI provider with retries and validation
-// Notes: Implements exponential backoff retry logic for rate limits and server errors. Validates API key presence, parses and validates JSON response structure, provides fallback for unparseable responses. Handles 401, 429, 500+ status codes appropriately. Max 3 retries with increasing delays.

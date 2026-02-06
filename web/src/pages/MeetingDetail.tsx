@@ -7,6 +7,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Spinner, LoadingScreen } from "@/components/ui/Spinner";
 import { FileDrop } from "@/components/FileDrop";
+import { DeleteMeetingModal } from "@/components/DeleteMeetingModal";
 import {
   ArrowLeft,
   Upload,
@@ -15,6 +16,8 @@ import {
   ListChecks,
   Lightbulb,
   Calendar,
+  User,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,9 +32,12 @@ export const MeetingDetail = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("summary");
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadMeeting();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadMeeting = async () => {
@@ -66,18 +72,34 @@ export const MeetingDetail = () => {
   };
 
   const handleProcess = async () => {
+    if (!meeting || !meeting.audioPath) return;
+
     try {
       setIsProcessing(true);
-      toast.info("Processing meeting... This may take a minute.");
-
-      await meetingsApi.process(Number(id));
-
+      const updated = await meetingsApi.process(meeting.id);
+      setMeeting(updated);
       toast.success("Meeting processed successfully!");
-      await loadMeeting();
+      setActiveTab("summary");
     } catch {
       // Error handled by interceptor
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!meeting) return;
+
+    try {
+      setIsDeleting(true);
+      await meetingsApi.delete(meeting.id);
+      toast.success("Meeting deleted successfully");
+      navigate("/");
+    } catch {
+      // Error handled by interceptor
+    } finally {
+      setIsDeleting(false);
+      setDeleteModal(false);
     }
   };
 
@@ -156,25 +178,34 @@ export const MeetingDetail = () => {
 
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {meeting.title}
-              </h1>
-              <div className="flex items-center space-x-4 text-sm text-gray-600">
-                <div className="flex items-center space-x-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formatDate(meeting.createdAt)}</span>
-                </div>
-                {meeting.summary ? (
-                  <Badge variant="success">Processed</Badge>
-                ) : meeting.audioPath ? (
-                  <Badge variant="warning">Ready to Process</Badge>
-                ) : (
-                  <Badge variant="default">No Audio</Badge>
-                )}
+          <div className="flex items-start justify-between mb-3">
+            <h1 className="text-3xl font-bold text-gray-900">
+              {meeting.title}
+            </h1>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4 text-sm text-gray-600">
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <span>{formatDate(meeting.createdAt)}</span>
               </div>
+              {meeting.summary ? (
+                <Badge variant="success">Processed</Badge>
+              ) : meeting.audioPath ? (
+                <Badge variant="warning">Ready to Process</Badge>
+              ) : (
+                <Badge variant="default">No Audio</Badge>
+              )}
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDeleteModal(true)}
+              className="text-gray-600 hover:text-error-600 hover:bg-error-50 flex items-center space-x-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Delete</span>
+            </Button>
           </div>
         </div>
 
@@ -238,8 +269,8 @@ export const MeetingDetail = () => {
         {/* Tabs (if processed) */}
         {meeting.summary && (
           <>
-            <div className="border-b border-gray-200 mb-6">
-              <nav className="flex space-x-8">
+            <div className="border-b border-gray-200 mb-8">
+              <nav className="flex space-x-8" aria-label="Tabs">
                 {tabs
                   .filter((tab) => tab.show)
                   .map((tab) => {
@@ -248,7 +279,7 @@ export const MeetingDetail = () => {
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                        className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-semibold text-sm transition-all ${
                           activeTab === tab.id
                             ? "border-primary-600 text-primary-600"
                             : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -302,21 +333,27 @@ export const MeetingDetail = () => {
                       {meeting.actionItems.map((item, index) => (
                         <div
                           key={index}
-                          className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg"
+                          className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-100"
                         >
-                          <div className="flex-shrink-0 w-6 h-6 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium">
+                          <div className="flex-shrink-0 w-7 h-7 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-sm font-semibold">
                             {index + 1}
                           </div>
                           <div className="flex-1">
-                            <p className="text-gray-900 font-medium">
+                            <p className="text-gray-900 font-medium leading-relaxed">
                               {item.task}
                             </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
+                            <div className="mt-3 flex flex-wrap gap-2">
                               {item.owner && (
-                                <Badge variant="info">👤 {item.owner}</Badge>
+                                <Badge variant="info">
+                                  <User className="h-3 w-3 mr-1" />
+                                  {item.owner}
+                                </Badge>
                               )}
                               {item.due && (
-                                <Badge variant="warning">📅 {item.due}</Badge>
+                                <Badge variant="warning">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {item.due}
+                                </Badge>
                               )}
                             </div>
                           </div>
@@ -337,12 +374,26 @@ export const MeetingDetail = () => {
                       {meeting.decisions.map((decision, index) => (
                         <li
                           key={index}
-                          className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg"
+                          className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-100"
                         >
-                          <div className="flex-shrink-0 w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                            ✓
+                          <div className="flex-shrink-0 w-6 h-6 bg-success-100 text-success-700 rounded-full flex items-center justify-center">
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
                           </div>
-                          <p className="text-gray-900 flex-1">{decision}</p>
+                          <p className="text-gray-900 flex-1 leading-relaxed">
+                            {decision}
+                          </p>
                         </li>
                       ))}
                     </ul>
@@ -353,6 +404,15 @@ export const MeetingDetail = () => {
           </>
         )}
       </div>
+
+      {/* Delete Meeting Modal */}
+      <DeleteMeetingModal
+        isOpen={deleteModal}
+        onClose={() => setDeleteModal(false)}
+        onConfirm={handleDelete}
+        meetingTitle={meeting?.title || ""}
+        isLoading={isDeleting}
+      />
     </Layout>
   );
 };

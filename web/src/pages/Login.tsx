@@ -6,7 +6,7 @@ import { useAuthStore } from "@/store/auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardBody } from "@/components/ui/Card";
-import { Mic2 } from "lucide-react";
+import { Video } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -37,23 +37,25 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center px-4 py-6">
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl mb-4">
-            <Mic2 className="h-8 w-8 text-white" />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl shadow-lg mb-3 transform hover:scale-105 transition-transform">
+            <Video className="h-7 w-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            Meeting Copilot
+          </h1>
+          <p className="text-gray-600 text-sm">
             Sign in to your Meeting Copilot account
           </p>
         </div>
 
         {/* Login Form */}
-        <Card>
-          <CardBody className="p-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <Card className="shadow-xl">
+          <CardBody className="p-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Input
                 label="Email"
                 type="email"
@@ -65,7 +67,7 @@ export const Login = () => {
               <Input
                 label="Password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 error={errors.password?.message}
                 {...register("password")}
               />
@@ -80,11 +82,11 @@ export const Login = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center text-sm">
+            <div className="mt-8 text-center text-sm">
               <span className="text-gray-600">Don't have an account? </span>
               <Link
                 to="/register"
-                className="text-primary-600 hover:text-primary-700 font-medium"
+                className="text-primary-600 hover:text-primary-700 font-semibold transition-colors"
               >
                 Sign up
               </Link>

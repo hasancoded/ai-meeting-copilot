@@ -82,7 +82,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 // Auth API
@@ -90,7 +90,7 @@ export const authApi = {
   register: async (
     email: string,
     password: string,
-    name?: string
+    name?: string,
   ): Promise<AuthResponse> => {
     const { data } = await api.post<AuthResponse>("/api/auth/register", {
       email,
@@ -135,7 +135,7 @@ export const meetingsApi = {
   uploadAudio: async (
     id: number,
     file: File,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<UploadResponse> => {
     const formData = new FormData();
     formData.append("audio", file);
@@ -150,21 +150,25 @@ export const meetingsApi = {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total && onProgress) {
             const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
+              (progressEvent.loaded * 100) / progressEvent.total,
             );
             onProgress(percentCompleted);
           }
         },
-      }
+      },
     );
     return data;
   },
 
   process: async (id: number): Promise<Meeting> => {
     const { data } = await api.post<MeetingResponse>(
-      `/api/meetings/${id}/process`
+      `/api/meetings/${id}/process`,
     );
     return data.item;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/api/meetings/${id}`);
   },
 };
 

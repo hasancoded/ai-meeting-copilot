@@ -19,7 +19,7 @@ export const FileDrop = ({
         onFileSelect(acceptedFiles[0]);
       }
     },
-    [onFileSelect]
+    [onFileSelect],
   );
 
   // Default accept configuration if none is provided
@@ -29,7 +29,7 @@ export const FileDrop = ({
         "audio/*": [".mp3", ".wav", ".m4a"],
         "video/*": [".mp4", ".webm", ".mpeg"],
       },
-    [accept]
+    [accept],
   );
 
   const { getRootProps, getInputProps, isDragActive, fileRejections } =
@@ -44,31 +44,34 @@ export const FileDrop = ({
     <div>
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
+        className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-200 ${
           isDragActive
-            ? "border-primary-500 bg-primary-50"
+            ? "border-primary-500 bg-primary-50 scale-[1.02]"
             : "border-gray-300 hover:border-primary-400 hover:bg-gray-50"
         }`}
       >
         <input {...getInputProps()} />
         <div className="flex flex-col items-center">
           {isDragActive ? (
-            <FileAudio className="h-12 w-12 text-primary-500 mb-4" />
+            <FileAudio className="h-16 w-16 text-primary-500 mb-6 animate-pulse" />
           ) : (
-            <Upload className="h-12 w-12 text-gray-400 mb-4" />
+            <Upload className="h-16 w-16 text-gray-400 mb-6" />
           )}
-          <p className="text-lg font-medium text-gray-700 mb-2">
+          <p className="text-lg font-semibold text-gray-700 mb-3">
             {isDragActive
               ? "Drop your file here"
               : "Drop audio/video file here"}
           </p>
-          <p className="text-sm text-gray-500">
-            or click to browse (MP3, WAV, M4A, MP4, WebM - max 100MB)
+          <p className="text-sm text-gray-500 leading-relaxed">
+            or click to browse
+          </p>
+          <p className="text-xs text-gray-400 mt-2">
+            MP3, WAV, M4A, MP4, WebM (max 100MB)
           </p>
         </div>
       </div>
       {fileRejections.length > 0 && (
-        <div className="mt-2 text-sm text-red-600">
+        <div className="mt-3 text-sm text-error-600 font-medium">
           {fileRejections[0].errors[0].message}
         </div>
       )}

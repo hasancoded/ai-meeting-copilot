@@ -1,6 +1,6 @@
-# 🤖 AI Meeting Copilot — MVP
+# AI Meeting Copilot - Detailed Technical Guide
 
-## 📌 Overview
+## Overview
 
 **AI Meeting Copilot** is a SaaS application designed to boost team productivity by automatically processing meetings. It transcribes uploaded audio/video files, generates AI-powered summaries, extracts action items, and stores meeting decisions in a searchable knowledge base.
 
@@ -8,15 +8,13 @@ This repository contains the **MVP monorepo** implementation with a **production
 
 ---
 
-## 📂 Current Directory Structure
+## Current Directory Structure
 
 ```
 ai-meeting-copilot
 ├── docs
-│   ├── api-documentation.md        # Complete API reference
-│   ├── dir-structure-mind-map.md
-│   ├── dir-structure.md
-│   └── README.md
+│   ├── API.md                       # Complete API reference
+│   └── DETAILED_GUIDE.md            # This file
 ├── server
 │   ├── prisma
 │   │   ├── migrations
@@ -33,10 +31,12 @@ ai-meeting-copilot
 │   │   │   └── meetings.ts         # Meeting CRUD + upload + process
 │   │   ├── services
 │   │   │   ├── ai
+│   │   │   │   ├── gemini.ts       # Google Gemini integration
 │   │   │   │   ├── openai.ts       # OpenAI GPT-4o-mini integration
 │   │   │   │   ├── provider.ts     # AI provider interface
 │   │   │   │   └── stub.ts         # Development stub
 │   │   │   └── transcription
+│   │   │       ├── gemini-transcriber.ts  # Gemini transcription
 │   │   │       ├── provider.ts     # Transcription interface
 │   │   │       ├── stub.ts         # Development stub
 │   │   │       └── whisper.ts      # OpenAI Whisper implementation
@@ -53,7 +53,7 @@ ai-meeting-copilot
 │   │   └── types.ts                # TypeScript types
 │   ├── uploads/.gitkeep
 │   ├── .dockerignore
-│   ├── .env.example
+│   ├── .env.development.example
 │   ├── .env.production.example
 │   ├── .gitignore
 │   ├── jest.config.js              # Jest test configuration
@@ -71,6 +71,7 @@ ai-meeting-copilot
 │   │   │   │   ├── Input.tsx       # Form input with validation
 │   │   │   │   └── Spinner.tsx     # Loading indicators
 │   │   │   ├── CreateMeetingModal.tsx  # Meeting creation modal
+│   │   │   ├── DeleteMeetingModal.tsx  # Meeting deletion confirmation
 │   │   │   ├── FileDrop.tsx        # Drag & drop file upload
 │   │   │   ├── Layout.tsx          # Main app layout with nav
 │   │   │   └── ProtectedRoute.tsx  # Route authentication guard
@@ -97,142 +98,154 @@ ai-meeting-copilot
 │   ├── tsconfig.json
 │   └── vite.config.ts
 ├── .dockerignore
+├── .gitignore
+├── .github
+│   ├── ISSUE_TEMPLATE
+│   │   ├── bug_report.md
+│   │   └── feature_request.md
+│   └── PULL_REQUEST_TEMPLATE.md
+├── CONTRIBUTING.md
 ├── docker-compose.yml              # Production deployment
 ├── Dockerfile                      # Multi-stage production build
+├── LICENSE
 ├── package-lock.json
-└── package.json
+├── package.json
+└── README.md
 ```
 
 ---
 
-## ✅ Backend Implementation (Complete)
+## Backend Implementation (Complete)
 
-### 🔐 Authentication & Authorization
+### Authentication & Authorization
 
-- ✅ JWT-based authentication with httpOnly cookies
-- ✅ Secure password hashing (bcrypt, 10 rounds)
-- ✅ User registration with email validation
-- ✅ Login with credential verification
-- ✅ Logout with cookie clearing
-- ✅ Protected routes with auth middleware
+- JWT-based authentication with httpOnly cookies
+- Secure password hashing (bcrypt, 10 rounds)
+- User registration with email validation
+- Login with credential verification
+- Logout with cookie clearing
+- Protected routes with auth middleware
 
-### 📊 Meeting Management
+### Meeting Management
 
-- ✅ Create meeting metadata (title)
-- ✅ List all user meetings (ordered by creation date)
-- ✅ Get detailed meeting information
-- ✅ User isolation (users can only access their own meetings)
-- ✅ Comprehensive input validation (Zod schemas)
+- Create meeting metadata (title)
+- List all user meetings (ordered by creation date)
+- Get detailed meeting information
+- Delete meetings with file cleanup
+- User isolation (users can only access their own meetings)
+- Comprehensive input validation (Zod schemas)
 
-### 📁 File Handling
+### File Handling
 
-- ✅ Audio/video file upload (mp3, wav, m4a, mp4, webm)
-- ✅ 100MB file size limit
-- ✅ File type validation (MIME type + extension)
-- ✅ Cross-platform path normalization (Windows/Linux)
-- ✅ Automatic file cleanup on errors
-- ✅ Replace existing audio files
+- Audio/video file upload (mp3, wav, m4a, mp4, webm)
+- 100MB file size limit
+- File type validation (MIME type + extension)
+- Cross-platform path normalization (Windows/Linux)
+- Automatic file cleanup on errors
+- Replace existing audio files
 
-### 🤖 AI Integration
+### AI Integration
 
-- ✅ OpenAI GPT-4o-mini for summarization
-- ✅ OpenAI Whisper for transcription
-- ✅ Retry logic with exponential backoff (3 attempts)
-- ✅ Action item extraction (owner, task, due date)
-- ✅ Decision extraction from transcripts
-- ✅ Stub providers for development (no API keys required)
-- ✅ Error handling for rate limits (429) and API failures
+- **OpenAI**: GPT-4o-mini for summarization, Whisper for transcription
+- **Google Gemini**: Gemini 1.5 Flash for both summarization and transcription
+- Retry logic with exponential backoff (3 attempts)
+- Action item extraction (owner, task, due date)
+- Decision extraction from transcripts
+- Stub providers for development (no API keys required)
+- Error handling for rate limits (429) and API failures
+- Provider pattern for easy switching between AI services
 
-### 🗄️ Database
+### Database
 
-- ✅ Prisma ORM with TypeScript
-- ✅ SQLite for development
-- ✅ PostgreSQL support for production
-- ✅ User and Meeting models with relations
-- ✅ Foreign key constraints with cascade delete
-- ✅ Automatic timestamps (createdAt, updatedAt)
+- Prisma ORM with TypeScript
+- SQLite for development
+- PostgreSQL support for production
+- User and Meeting models with relations
+- Foreign key constraints with cascade delete
+- Automatic timestamps (createdAt, updatedAt)
 
-### ✅ Testing
+### Testing
 
-- ✅ Jest + Supertest configuration
-- ✅ 36 comprehensive tests (all passing)
-- ✅ Auth tests (register, login, logout, validation)
-- ✅ Meeting tests (CRUD, upload, process, authorization)
-- ✅ User isolation tests
-- ✅ File upload tests with cleanup
-- ✅ Test coverage for error scenarios
+- Jest + Supertest configuration
+- 36 comprehensive tests
+- Auth tests (register, login, logout, validation)
+- Meeting tests (CRUD, upload, process, authorization)
+- User isolation tests
+- File upload tests with cleanup
+- Test coverage for error scenarios
 
-### 🐳 DevOps & Deployment
+### DevOps & Deployment
 
-- ✅ Multi-stage Dockerfile for production
-- ✅ Docker Compose with PostgreSQL
-- ✅ Health check endpoints
-- ✅ Environment variable validation
-- ✅ CORS configuration
-- ✅ Production-ready error handling
+- Multi-stage Dockerfile for production
+- Docker Compose with PostgreSQL
+- Health check endpoints
+- Environment variable validation
+- CORS configuration
+- Production-ready error handling
 
-### 📝 Documentation
+### Documentation
 
-- ✅ Complete API documentation (docs/api-documentation.md)
-- ✅ All endpoints documented with examples
-- ✅ Request/response schemas
-- ✅ Error scenarios and status codes
-- ✅ curl and Postman examples
-- ✅ Environment configuration guide
-
----
-
-## ✅ Frontend Implementation (Complete)
-
-### 🎨 Pages
-
-- ✅ Login page with form validation (react-hook-form + zod)
-- ✅ Register page with error handling and password confirmation
-- ✅ Dashboard with meeting list (card-based layout)
-- ✅ Meeting detail page with tabs (transcript, summary, action items, decisions)
-- ✅ Meeting creation modal with navigation to upload
-- ✅ File upload interface with drag & drop (react-dropzone)
-
-### 🧩 Components
-
-- ✅ Layout component with responsive navigation
-- ✅ TopBar with user menu and logout
-- ✅ FileDrop component for audio uploads with progress
-- ✅ Card component for meeting items with hover effects
-- ✅ Badge component for status indicators
-- ✅ Button component with variants and loading states
-- ✅ Input component with validation errors
-- ✅ Spinner and loading screen components
-- ✅ EmptyState component for no data scenarios
-- ✅ ProtectedRoute component for authentication
-
-### 🔧 State Management & API
-
-- ✅ Zustand auth store (user session, login/logout, persistence)
-- ✅ API client with axios and interceptors
-- ✅ Cookie-based authentication handling
-- ✅ Automatic 401 redirect to login
-- ✅ Toast notifications for all actions (sonner)
-- ✅ Error handling with user-friendly messages
-- ✅ Upload progress tracking
-- ✅ Processing status indicators
-
-### 🎯 Features
-
-- ✅ **Modern UI/UX**: Gradient auth pages, smooth animations, responsive design
-- ✅ **Form Validation**: Real-time validation with react-hook-form + zod
-- ✅ **File Upload**: Drag & drop with progress bar and file type validation
-- ✅ **Meeting Processing**: Upload → Process → View results workflow
-- ✅ **Tab Navigation**: Organized content display (summary, transcript, actions, decisions)
-- ✅ **Status Badges**: Visual indicators (Processed, Ready to Process, No Audio)
-- ✅ **Empty States**: Helpful messages when no data available
-- ✅ **Loading States**: Spinners, skeletons, and progress bars
-- ✅ **Responsive Design**: Mobile-first with hamburger menu
-- ✅ **Accessibility**: Proper labels, keyboard navigation, ARIA attributes
+- Complete API documentation (docs/API.md)
+- All endpoints documented with examples
+- Request/response schemas
+- Error scenarios and status codes
+- curl and Postman examples
+- Environment configuration guide
 
 ---
 
-## 🚀 Quick Start
+## Frontend Implementation (Complete)
+
+### Pages
+
+- Login page with form validation (react-hook-form + zod)
+- Register page with error handling and password confirmation
+- Dashboard with meeting list (card-based layout)
+- Meeting detail page with tabs (transcript, summary, action items, decisions)
+- Meeting creation modal with navigation to upload
+- File upload interface with drag & drop (react-dropzone)
+
+### Components
+
+- Layout component with responsive navigation
+- TopBar with user menu and logout
+- FileDrop component for audio uploads with progress
+- Card component for meeting items with hover effects
+- Badge component for status indicators
+- Button component with variants and loading states
+- Input component with validation errors
+- Spinner and loading screen components
+- EmptyState component for no data scenarios
+- ProtectedRoute component for authentication
+- DeleteMeetingModal for confirmation dialogs
+
+### State Management & API
+
+- Zustand auth store (user session, login/logout, persistence)
+- API client with axios and interceptors
+- Cookie-based authentication handling
+- Automatic 401 redirect to login
+- Toast notifications for all actions (sonner)
+- Error handling with user-friendly messages
+- Upload progress tracking
+- Processing status indicators
+
+### Features
+
+- **Modern UI/UX**: Gradient auth pages, smooth animations, responsive design
+- **Form Validation**: Real-time validation with react-hook-form + zod
+- **File Upload**: Drag & drop with progress bar and file type validation
+- **Meeting Processing**: Upload → Process → View results workflow
+- **Tab Navigation**: Organized content display (summary, transcript, actions, decisions)
+- **Status Badges**: Visual indicators (Processed, Ready to Process, No Audio)
+- **Empty States**: Helpful messages when no data available
+- **Loading States**: Spinners, skeletons, and progress bars
+- **Responsive Design**: Mobile-first with hamburger menu
+- **Accessibility**: Proper labels, keyboard navigation, ARIA attributes
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
@@ -246,16 +259,13 @@ ai-meeting-copilot
 **1. Clone the repository**
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/hasancoded/ai-meeting-copilot.git
 cd ai-meeting-copilot
 ```
 
 **2. Install dependencies**
 
 ```bash
-# Install root dependencies (optional)
-npm install
-
 # Install backend dependencies
 cd server
 npm install
@@ -269,11 +279,11 @@ npm install
 
 ```bash
 cd server
-cp .env.example .env
-# Edit .env and set JWT_SECRET (minimum 32 characters)
+cp .env.development.example .env.development
+# Edit .env.development and set JWT_SECRET (minimum 32 characters)
 ```
 
-Example `.env`:
+Example `.env.development`:
 
 ```env
 PORT=4000
@@ -292,7 +302,7 @@ cd web
 cp .env.example .env
 ```
 
-Example `.env`:
+Example `web/.env`:
 
 ```env
 VITE_API_URL=http://localhost:4000
@@ -347,11 +357,11 @@ npm run lint
 
 ### Using Real AI Providers
 
-To use OpenAI instead of stub providers:
+#### Option 1: OpenAI (GPT-4o-mini + Whisper)
 
 **1. Get an OpenAI API key** from https://platform.openai.com
 
-**2. Update server/.env:**
+**2. Update server/.env.development:**
 
 ```env
 AI_PROVIDER=openai
@@ -366,6 +376,32 @@ cd server
 npm run dev
 ```
 
+#### Option 2: Google Gemini (Recommended)
+
+**1. Get a Gemini API key** from https://makersuite.google.com/app/apikey
+
+**2. Update server/.env.development:**
+
+```env
+AI_PROVIDER=gemini
+TRANSCRIBE_PROVIDER=gemini
+GEMINI_API_KEY=your-actual-gemini-key-here
+```
+
+**3. Restart backend server**
+
+```bash
+cd server
+npm run dev
+```
+
+**Why Gemini?**
+
+- Larger context window (1M tokens vs 128K)
+- Lower cost per token
+- Larger file size limit (100MB inline vs Whisper's 25MB)
+- Single API for both transcription and summarization
+
 ---
 
 ### Production Deployment
@@ -374,7 +410,7 @@ npm run dev
 
 ```bash
 cp server/.env.production.example server/.env.production
-# Edit with production values (PostgreSQL, OpenAI keys, etc.)
+# Edit with production values (PostgreSQL, API keys, etc.)
 ```
 
 **2. Build and start with Docker**
@@ -391,9 +427,9 @@ docker-compose logs -f server
 
 ---
 
-## 📊 API Endpoints
+## API Endpoints
 
-See `docs/api-documentation.md` for complete API reference.
+See `docs/API.md` for complete API reference.
 
 ### Authentication
 
@@ -408,6 +444,7 @@ See `docs/api-documentation.md` for complete API reference.
 - `GET /api/meetings/:id` - Get meeting details
 - `POST /api/meetings/:id/upload` - Upload audio file
 - `POST /api/meetings/:id/process` - Transcribe & analyze
+- `DELETE /api/meetings/:id` - Delete meeting
 
 ### Health
 
@@ -416,7 +453,7 @@ See `docs/api-documentation.md` for complete API reference.
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run the complete test suite:
 
@@ -427,17 +464,17 @@ npm test
 
 ### Test coverage:
 
-- ✅ 36 tests total
-- ✅ Authentication flows
-- ✅ Meeting CRUD operations
-- ✅ File upload handling
-- ✅ Processing pipeline
-- ✅ User isolation
-- ✅ Error scenarios
+- 36 tests total
+- Authentication flows
+- Meeting CRUD operations
+- File upload handling
+- Processing pipeline
+- User isolation
+- Error scenarios
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
 
@@ -449,7 +486,7 @@ npm test
 - **Validation:** Zod
 - **Testing:** Jest + Supertest
 - **File Upload:** Multer
-- **AI:** OpenAI GPT-4o-mini + Whisper
+- **AI:** OpenAI (GPT-4o-mini + Whisper) or Google Gemini (1.5 Flash)
 
 ### Frontend
 
@@ -473,7 +510,7 @@ npm test
 
 ---
 
-## 📦 Environment Variables
+## Environment Variables
 
 ### Backend (server/.env)
 
@@ -487,9 +524,10 @@ npm test
 - `PORT` - Server port (default: 4000)
 - `NODE_ENV` - Environment mode (default: development)
 - `FRONTEND_URL` - CORS origin (default: http://localhost:5173)
-- `AI_PROVIDER` - AI service (stub | openai, default: stub)
-- `TRANSCRIBE_PROVIDER` - Transcription service (stub | whisper, default: stub)
+- `AI_PROVIDER` - AI service (stub | openai | gemini, default: stub)
+- `TRANSCRIBE_PROVIDER` - Transcription service (stub | whisper | gemini, default: stub)
 - `OPENAI_API_KEY` - OpenAI API key (required if using openai providers)
+- `GEMINI_API_KEY` - Google Gemini API key (required if using gemini providers)
 
 ### Frontend (web/.env)
 
@@ -501,118 +539,31 @@ See `.env.example` files for complete configuration templates.
 
 ---
 
-## 🗺️ Roadmap
-
-### Phase 1: Backend MVP ✅ (Complete)
-
-- ✅ Authentication system
-- ✅ Meeting CRUD operations
-- ✅ File upload handling
-- ✅ AI integration (OpenAI + Whisper)
-- ✅ Comprehensive testing
-- ✅ Docker deployment
-- ✅ API documentation
-
-### Phase 2: Frontend MVP ✅ (Complete)
-
-- ✅ Auth pages (Login, Register)
-- ✅ Dashboard with meeting list
-- ✅ Meeting detail page
-- ✅ File upload interface
-- ✅ API integration
-- ✅ State management
-- ✅ Responsive design
-- ✅ Error handling
-- ✅ Loading states
-
-### Phase 3: Enhancements 🔮 (Future)
-
-- 🔮 Real-time processing status (WebSockets)
-- 🔮 Full-text search across transcripts
-- 🔮 S3 file storage
-- 🔮 Export to PDF/DOCX
-- 🔮 Calendar integrations (Google, Outlook)
-- 🔮 Team collaboration features
-- 🔮 Slack/Jira integrations
-- 🔮 Multi-language support
-- 🔮 Speaker diarization
-- 🔮 Meeting analytics and insights
-- 🔮 Custom AI prompts
-- 🔮 Audio playback with timestamps
-
----
-
-## 🎯 User Workflow
+## User Workflow
 
 ### Complete End-to-End Flow
 
-1. **Register** → Create account with email and password
-2. **Login** → Authenticate and receive JWT cookie
-3. **Dashboard** → View all meetings or empty state
-4. **Create Meeting** → Click "New Meeting" and enter title
-5. **Upload Audio** → Drag & drop or select audio/video file
-6. **Process Meeting** → Click "Process Meeting" to transcribe and analyze
-7. **View Results** → Navigate between tabs:
+1. **Register** - Create account with email and password
+2. **Login** - Authenticate and receive JWT cookie
+3. **Dashboard** - View all meetings or empty state
+4. **Create Meeting** - Click "New Meeting" and enter title
+5. **Upload Audio** - Drag & drop or select audio/video file
+6. **Process Meeting** - Click "Process Meeting" to transcribe and analyze
+7. **View Results** - Navigate between tabs:
    - **Summary**: AI-generated executive summary
    - **Transcript**: Full meeting transcription
    - **Action Items**: Extracted tasks with owners and due dates
    - **Decisions**: Key decisions made during meeting
-8. **Navigate Back** → Return to dashboard to view all meetings
-9. **Logout** → End session and clear authentication
+8. **Navigate Back** - Return to dashboard to view all meetings
+9. **Logout** - End session and clear authentication
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Commit Message Convention
-
-- `feat:` New features
-- `fix:` Bug fixes
-- `docs:` Documentation changes
-- `test:` Test additions/changes
-- `chore:` Build/config changes
-- `style:` Code style changes
-- `refactor:` Code refactoring
-
----
-
-## 📄 License
-
-MIT License - see LICENSE file for details
-
----
-
-## 👥 Authors
-
-[Your Name] - Initial work
-
----
-
-## 🙏 Acknowledgments
-
-- OpenAI for GPT-4o-mini and Whisper APIs
-- Prisma team for excellent ORM
-- Express.js community
-- React and Vite teams
-- TailwindCSS for utility-first CSS
-- Zustand for lightweight state management
-
----
-
-## 🐛 Known Issues & Troubleshooting
+## Known Issues & Troubleshooting
 
 ### Backend
 
 - **Issue**: `JWT_SECRET not set` error
-
   - **Solution**: Copy `.env.example` to `.env` and set a 32+ character secret
 
 - **Issue**: Database migration errors
@@ -621,7 +572,6 @@ MIT License - see LICENSE file for details
 ### Frontend
 
 - **Issue**: CORS errors
-
   - **Solution**: Ensure `FRONTEND_URL` in backend `.env` matches your frontend URL
 
 - **Issue**: API requests failing
@@ -630,7 +580,6 @@ MIT License - see LICENSE file for details
 ### AI Processing
 
 - **Issue**: OpenAI rate limit exceeded
-
   - **Solution**: Use stub providers for development or upgrade OpenAI tier
 
 - **Issue**: File too large for Whisper
@@ -638,18 +587,18 @@ MIT License - see LICENSE file for details
 
 ---
 
-## 📞 Support
+## Support
 
 For issues and questions:
 
 - Open an issue on GitHub
-- Check `docs/api-documentation.md` for API details
+- Check `docs/API.md` for API details
 - Review backend tests for usage examples
 
 ---
 
-**Status:** Full-Stack MVP Complete ✅ | Production Ready 🚀
+**Status:** Full-Stack MVP Complete | Production Ready
 
-**Last Updated:** January 2025
+**Last Updated:** February 2026
 
-For detailed API documentation, see `docs/api-documentation.md`
+For detailed API documentation, see `docs/API.md`

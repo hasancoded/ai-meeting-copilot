@@ -65,23 +65,23 @@ export const CreateMeetingModal = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 animate-slide-up">
+        <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-scale-in">
           {/* Close Button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
           >
             <X className="h-5 w-5" />
           </button>
 
           {/* Header */}
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 pr-8">
             Create New Meeting
           </h2>
 
@@ -95,7 +95,7 @@ export const CreateMeetingModal = ({
               autoFocus
             />
 
-            <div className="flex space-x-3">
+            <div className="flex space-x-3 pt-2">
               <Button
                 type="button"
                 variant="outline"

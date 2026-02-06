@@ -12,16 +12,16 @@ export const Badge = ({
   ...props
 }: BadgeProps) => {
   const variants = {
-    default: "bg-gray-100 text-gray-800",
-    success: "bg-green-100 text-green-800",
-    warning: "bg-yellow-100 text-yellow-800",
-    danger: "bg-red-100 text-red-800",
-    info: "bg-blue-100 text-blue-800",
+    default: "bg-gray-100 text-gray-700 border border-gray-200",
+    success: "bg-success-50 text-success-700 border border-success-200",
+    warning: "bg-warning-50 text-warning-700 border border-warning-200",
+    danger: "bg-error-50 text-error-700 border border-error-200",
+    info: "bg-info-50 text-info-700 border border-info-200",
   };
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${variants[variant]} ${className}`}
       {...props}
     >
       {children}

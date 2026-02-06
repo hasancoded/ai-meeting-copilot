@@ -13,9 +13,9 @@ export const Card = ({
 }: CardProps) => {
   return (
     <div
-      className={`bg-white rounded-lg border border-gray-200 shadow-sm ${
+      className={`bg-white rounded-xl border border-gray-200 shadow-sm ${
         hover
-          ? "hover:shadow-md hover:border-primary-300 transition-all cursor-pointer"
+          ? "hover:shadow-lg hover:border-primary-200 transition-all duration-300 cursor-pointer transform hover:-translate-y-0.5"
           : ""
       } ${className}`}
       {...props}
@@ -32,7 +32,7 @@ export const CardHeader = ({
 }: HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
-      className={`px-6 py-4 border-b border-gray-200 ${className}`}
+      className={`px-6 py-5 border-b border-gray-100 ${className}`}
       {...props}
     >
       {children}
@@ -46,7 +46,7 @@ export const CardBody = ({
   ...props
 }: HTMLAttributes<HTMLDivElement>) => {
   return (
-    <div className={`px-6 py-4 ${className}`} {...props}>
+    <div className={`px-6 py-5 ${className}`} {...props}>
       {children}
     </div>
   );
@@ -59,7 +59,7 @@ export const CardFooter = ({
 }: HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
-      className={`px-6 py-4 border-t border-gray-200 bg-gray-50 ${className}`}
+      className={`px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl ${className}`}
       {...props}
     >
       {children}

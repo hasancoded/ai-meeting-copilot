@@ -1,7 +1,8 @@
 {
-  "name": "web",
+  "name": "ai-meeting-copilot-web",
+  "description": "AI Meeting Copilot - Frontend Application",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

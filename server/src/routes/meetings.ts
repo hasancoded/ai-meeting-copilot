@@ -9,8 +9,10 @@ import { requireAuth } from "../middleware/auth";
 import { env } from "../env";
 import { StubProvider } from "../services/ai/stub";
 import { OpenAIProvider } from "../services/ai/openai";
+import { GeminiProvider } from "../services/ai/gemini";
 import { StubTranscriber } from "../services/transcription/stub";
 import { WhisperTranscriber } from "../services/transcription/whisper";
+import { GeminiTranscriber } from "../services/transcription/gemini-transcriber";
 
 const uploadsDir = path.join(process.cwd(), "server", "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -59,15 +61,15 @@ const idParamSchema = z.object({
 });
 
 function getAI() {
-  return env.AI_PROVIDER === "openai"
-    ? new OpenAIProvider()
-    : new StubProvider();
+  if (env.AI_PROVIDER === "openai") return new OpenAIProvider();
+  if (env.AI_PROVIDER === "gemini") return new GeminiProvider();
+  return new StubProvider();
 }
 
 function getTranscriber() {
-  return env.TRANSCRIBE_PROVIDER === "whisper"
-    ? new WhisperTranscriber()
-    : new StubTranscriber();
+  if (env.TRANSCRIBE_PROVIDER === "whisper") return new WhisperTranscriber();
+  if (env.TRANSCRIBE_PROVIDER === "gemini") return new GeminiTranscriber();
+  return new StubTranscriber();
 }
 
 // Helper to normalize path separators to forward slashes (cross-platform)
@@ -184,7 +186,7 @@ meetings.post("/:id/upload", upload.single("audio"), async (req, res) => {
     // Store relative path for serving via express.static
     const relativePath = path.relative(
       path.join(process.cwd(), "server"),
-      req.file.path
+      req.file.path,
     );
 
     // Normalize path separators for cross-platform compatibility
@@ -353,14 +355,61 @@ meetings.get("/:id", async (req, res) => {
   }
 });
 
-// Commit message: feat(meetings): add validation, error handling, and file cleanup
-// PR title: feat: Enhance meetings routes with comprehensive validation
-// Notes: Added zod validation for all inputs, proper error messages with 400/404/500 status codes, file cleanup on errors, file size limits (100MB), and file type validation. Multer configured to accept common audio/video formats.
+/**
+ * DELETE /api/meetings/:id
+ * Delete a meeting and its associated audio file
+ */
+meetings.delete("/:id", async (req, res) => {
+  try {
+    const userId = (req as any).user.id as number;
 
-// Commit message: fix(meetings): normalize paths and check auth before file upload
-// PR title: fix: Add path normalization and early auth check in upload route
-// Notes: Added normalizePath helper to convert backslashes to forward slashes for cross-platform compatibility. Added authentication check before multer processes files to prevent ECONNRESET errors. This ensures uploaded files are cleaned up properly when auth fails.
+    // Validate ID parameter
+    const paramValidation = idParamSchema.safeParse(req.params);
+    if (!paramValidation.success) {
+      return res.status(400).json({
+        error: "Invalid meeting ID format",
+      });
+    }
 
-// Commit message: fix(meetings): remove early auth check to fix upload test
-// PR title: fix: Allow requireAuth middleware to handle all auth for upload
-// Notes: Removed the early authentication check before multer that was causing ECONNRESET. The requireAuth middleware at the router level already handles authentication properly. Multer will only process files for authenticated requests, and the 401 response is now sent correctly.
+    const id = Number(paramValidation.data.id);
+
+    // Check if meeting exists and belongs to user
+    const meeting = await prisma.meeting.findFirst({
+      where: { id, ownerId: userId },
+    });
+
+    if (!meeting) {
+      return res.status(404).json({ error: "Meeting not found" });
+    }
+
+    // Delete associated audio file if it exists
+    if (meeting.audioPath) {
+      const audioFilePath = path.join(
+        process.cwd(),
+        "server",
+        meeting.audioPath,
+      );
+      if (fs.existsSync(audioFilePath)) {
+        try {
+          fs.unlinkSync(audioFilePath);
+        } catch (fileError) {
+          console.error("Error deleting audio file:", fileError);
+          // Continue with database deletion even if file deletion fails
+        }
+      }
+    }
+
+    // Delete meeting from database
+    await prisma.meeting.delete({
+      where: { id },
+    });
+
+    res.json({
+      ok: true,
+      message: "Meeting deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting meeting:", error);
+    res.status(500).json({ error: "Failed to delete meeting" });
+  }
+});

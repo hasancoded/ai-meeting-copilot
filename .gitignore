@@ -10,6 +10,10 @@
 *.sqlite
 *.sqlite3
 
+# Uploaded files
+uploads/
+server/uploads/
+
 # Coverage reports
 coverage/
 *.lcov

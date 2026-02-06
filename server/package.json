@@ -22,10 +22,11 @@
     "transcription",
     "copilot"
   ],
-  "author": "",
+  "author": "hasancoded",
   "license": "MIT",
   "description": "AI Meeting Copilot Backend Server",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.10.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",

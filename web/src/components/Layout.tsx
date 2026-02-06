@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth";
-import { Mic2, LogOut, User, Menu, X } from "lucide-react";
+import { Video, LogOut, User, Menu, X } from "lucide-react";
 import { Button } from "./ui/Button";
 
 interface LayoutProps {
@@ -21,24 +21,27 @@ export const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top Navigation */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="bg-primary-600 p-2 rounded-lg">
-                <Mic2 className="h-6 w-6 text-white" />
+            <Link
+              to="/"
+              className="flex items-center space-x-3 group transition-transform hover:scale-105"
+            >
+              <div className="bg-gradient-to-br from-primary-600 to-primary-700 p-2 rounded-xl shadow-sm">
+                <Video className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
                 Meeting Copilot
               </span>
             </Link>
 
             {/* Desktop User Menu */}
             <div className="hidden md:flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-700">
-                <User className="h-4 w-4" />
-                <span>{user?.email}</span>
+              <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-50 text-sm text-gray-700">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">{user?.email}</span>
               </div>
               <Button
                 variant="ghost"
@@ -53,7 +56,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden p-2 rounded-md text-gray-600 hover:bg-gray-100"
+              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (
@@ -67,11 +70,11 @@ export const Layout = ({ children }: LayoutProps) => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 bg-white">
-            <div className="px-4 py-3 space-y-3">
-              <div className="flex items-center space-x-2 text-sm text-gray-700">
-                <User className="h-4 w-4" />
-                <span>{user?.email}</span>
+          <div className="md:hidden border-t border-gray-200 bg-white animate-slide-down">
+            <div className="px-4 py-4 space-y-3">
+              <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-50 text-sm text-gray-700">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="font-medium">{user?.email}</span>
               </div>
               <Button
                 variant="ghost"
@@ -93,8 +96,8 @@ export const Layout = ({ children }: LayoutProps) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <footer className="bg-white border-t border-gray-200 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-sm text-gray-500">
             © 2025 AI Meeting Copilot. All rights reserved.
           </p>
