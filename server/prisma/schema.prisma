@@ -8,12 +8,15 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  name      String?
-  password  String
-  createdAt DateTime  @default(now())
-  meetings  Meeting[]
+  id                Int       @id @default(autoincrement())
+  email             String    @unique
+  name              String?
+  password          String
+  createdAt         DateTime  @default(now())
+  meetings          Meeting[]
+  apiKeyEncrypted   String?   // AES-256-GCM ciphertext (iv:authTag:ciphertext, hex)
+  apiKeyProvider    String?   // "openai" | "gemini"
+  apiKeyModel       String?   // e.g. "models/gemini-2.5-flash", "gpt-4o-mini"
 }
 
 model Meeting {

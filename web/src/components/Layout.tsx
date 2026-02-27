@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/auth";
-import { Video, LogOut, User, Menu, X } from "lucide-react";
+import { Video, LogOut, User, Menu, X, Settings } from "lucide-react";
 import { Button } from "./ui/Button";
 
 interface LayoutProps {
@@ -43,6 +43,13 @@ export const Layout = ({ children }: LayoutProps) => {
                 <User className="h-4 w-4 text-gray-500" />
                 <span className="font-medium">{user?.email}</span>
               </div>
+              <Link
+                to="/settings"
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
               <Button
                 variant="ghost"
                 size="sm"
@@ -76,6 +83,14 @@ export const Layout = ({ children }: LayoutProps) => {
                 <User className="h-4 w-4 text-gray-500" />
                 <span className="font-medium">{user?.email}</span>
               </div>
+              <Link
+                to="/settings"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
               <Button
                 variant="ghost"
                 size="sm"

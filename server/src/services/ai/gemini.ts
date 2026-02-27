@@ -1,21 +1,26 @@
-// FILE: server/src/services/ai/gemini.ts
 import { AIProvider, AIOutputs } from "./provider";
 import { env } from "../../env";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export class GeminiProvider implements AIProvider {
   private apiKey: string;
+  private model: string;
   private genAI: GoogleGenerativeAI;
   private maxRetries = 3;
   private retryDelay = 1000; // milliseconds
 
-  constructor() {
-    if (!env.GEMINI_API_KEY) {
+  /**
+   * @param apiKey - The user's decrypted API key.
+   * @param model  - The model name selected by the user (e.g. "models/gemini-2.5-flash").
+   */
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey ?? env.GEMINI_API_KEY ?? "";
+    this.model = model ?? "models/gemini-2.5-flash";
+    if (!this.apiKey) {
       console.warn(
-        "GEMINI_API_KEY not set. AI summarization will fail. Set AI_PROVIDER=stub for development.",
+        "No Gemini API key provided. Set AI_PROVIDER=stub for development.",
       );
     }
-    this.apiKey = env.GEMINI_API_KEY || "";
     this.genAI = new GoogleGenerativeAI(this.apiKey);
   }
 
@@ -57,7 +62,7 @@ Transcript: ${transcript}`;
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
         const model = this.genAI.getGenerativeModel({
-          model: "models/gemini-2.5-flash",
+          model: this.model,
           generationConfig: {
             temperature: 0.2,
             maxOutputTokens: 2000,

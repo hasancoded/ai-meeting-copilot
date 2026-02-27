@@ -1,25 +1,28 @@
 # AI Meeting Copilot
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/tests-48%20passing-brightgreen)](#testing)
 
-AI-powered meeting assistant that transcribes audio/video files, generates summaries, extracts action items, and builds a searchable knowledge base. Built with Node.js, Express, React, and Google Gemini AI.
+AI-powered meeting assistant that transcribes audio and video recordings, generates executive summaries, extracts action items, and tracks decisions. Users bring their own API key — no shared credentials, no hidden costs.
+
+---
 
 ## Features
 
-- **Audio Transcription**: Upload meeting recordings and get accurate transcriptions using OpenAI Whisper or Google Gemini
-- **AI Summarization**: Automatic executive summaries powered by GPT-4o-mini or Gemini 1.5 Flash
-- **Action Item Extraction**: Automatically identify tasks, owners, and due dates from meeting discussions
-- **Decision Tracking**: Capture and organize key decisions made during meetings
-- **Secure Authentication**: JWT-based authentication with httpOnly cookies
-- **User Isolation**: Each user can only access their own meetings
-- **File Management**: Support for multiple audio/video formats (MP3, WAV, M4A, MP4, WebM)
-- **Modern UI**: Responsive React interface with drag-and-drop file upload
+- **Audio Transcription** — Supports MP3, WAV, M4A, MP4, and WebM via OpenAI Whisper or Google Gemini
+- **AI Summarization** — Concise executive summaries from full meeting transcripts
+- **Action Item Extraction** — Automatically identifies tasks, owners, and due dates
+- **Decision Tracking** — Captures key decisions made during meetings
+- **Per-User API Keys** — Users supply and manage their own Gemini or OpenAI key via the Settings page; keys are encrypted at rest with AES-256-GCM
+- **Model Selection** — Users choose their preferred model (Gemini 2.5 Flash, GPT-4o-mini, etc.) from the Settings page
+- **Secure Authentication** — JWT tokens in httpOnly cookies; all data is user-isolated
+- **Modern UI** — Responsive React interface with drag-and-drop file upload
+
+---
 
 ## Architecture
-
-The AI Meeting Copilot follows a modern three-tier architecture with clear separation of concerns and scalable design patterns.
 
 ```mermaid
 graph TB
@@ -37,16 +40,17 @@ graph TB
         AISvc["AI Service<br/>Provider Pattern"]
         TransSvc["Transcription Service<br/>Provider Pattern"]
         FileSvc["File Handler<br/>Multer + Cleanup"]
+        KeySvc["API Key Service<br/>AES-256-GCM"]
     end
 
     subgraph Data["Data Layer"]
         ORM["Prisma ORM<br/>Type-Safe Queries"]
-        Database[("Database<br/>SQLite/PostgreSQL")]
+        Database[("Database<br/>SQLite / PostgreSQL")]
     end
 
     subgraph External["External Services"]
         OpenAI["OpenAI API<br/>GPT-4o + Whisper"]
-        Gemini["Google Gemini<br/>1.5 Flash"]
+        Gemini["Google Gemini<br/>2.5 Flash"]
     end
 
     UI -->|HTTP/JSON| REST
@@ -55,6 +59,7 @@ graph TB
     RouteH --> AISvc
     RouteH --> TransSvc
     RouteH --> FileSvc
+    RouteH --> KeySvc
     RouteH --> ORM
 
     AISvc -.->|API| OpenAI
@@ -64,383 +69,313 @@ graph TB
 
     ORM -->|SQL| Database
     FileSvc -->|I/O| Storage["File System<br/>uploads/"]
-
-    style UI fill:#4A90E2,stroke:#2E5C8A,stroke-width:2px,color:#fff
-    style REST fill:#F5A623,stroke:#C17D11,stroke-width:2px,color:#fff
-    style AuthMW fill:#F5A623,stroke:#C17D11,stroke-width:2px,color:#fff
-    style RouteH fill:#F5A623,stroke:#C17D11,stroke-width:2px,color:#fff
-    style AISvc fill:#7ED321,stroke:#5FA319,stroke-width:2px,color:#fff
-    style TransSvc fill:#7ED321,stroke:#5FA319,stroke-width:2px,color:#fff
-    style FileSvc fill:#7ED321,stroke:#5FA319,stroke-width:2px,color:#fff
-    style ORM fill:#BD10E0,stroke:#8B0AA8,stroke-width:2px,color:#fff
-    style Database fill:#BD10E0,stroke:#8B0AA8,stroke-width:2px,color:#fff
-    style OpenAI fill:#50E3C2,stroke:#3AB39A,stroke-width:2px,color:#fff
-    style Gemini fill:#50E3C2,stroke:#3AB39A,stroke-width:2px,color:#fff
-    style Storage fill:#9013FE,stroke:#6B0EBE,stroke-width:2px,color:#fff
 ```
 
 ### Key Design Patterns
 
-- **Provider Pattern**: Pluggable AI and transcription services with stub implementations for development
-- **Middleware Chain**: Authentication, validation, and error handling as composable middleware
-- **Repository Pattern**: Prisma ORM abstracts database operations with type safety
-- **Service Layer**: Business logic separated from HTTP concerns for testability
-- **Retry Logic**: Exponential backoff for external API calls with circuit breaker pattern
+- **Provider Pattern** — Pluggable AI and transcription services with a stub implementation for zero-config development
+- **Per-User Key Injection** — API keys are decrypted at request time and injected into provider constructors; the raw key is never logged or stored in plaintext
+- **Repository Pattern** — Prisma ORM abstracts all database access with full type safety
+- **Retry Logic** — Exponential backoff on all external API calls
 
-### Data Flow
-
-1. **Upload Flow**: Client → API → File Validation → Storage → Database Record
-2. **Processing Flow**: Client → API → File Retrieval → Transcription Service → AI Service → Database Update
-3. **Authentication Flow**: Client → Login → JWT Generation → HttpOnly Cookie → Protected Routes
+---
 
 ## Tech Stack
 
 ### Backend
 
-- **Runtime**: Node.js 20
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **Database**: Prisma ORM (SQLite for development, PostgreSQL for production)
-- **Authentication**: JWT + bcrypt
-- **Validation**: Zod
-- **Testing**: Jest + Supertest (36 tests, all passing)
-- **File Upload**: Multer
-- **AI**: OpenAI (GPT-4o-mini + Whisper) or Google Gemini (1.5 Flash)
+| Concern        | Technology                   |
+| -------------- | ---------------------------- |
+| Runtime        | Node.js 20                   |
+| Framework      | Express.js                   |
+| Language       | TypeScript 5.4               |
+| Database ORM   | Prisma (SQLite / PostgreSQL) |
+| Authentication | JWT + bcrypt                 |
+| Validation     | Zod                          |
+| File Upload    | Multer                       |
+| Encryption     | Node.js crypto (AES-256-GCM) |
+| Testing        | Jest + Supertest             |
 
 ### Frontend
 
-- **Framework**: React 19
-- **Build Tool**: Vite
-- **Styling**: TailwindCSS
-- **Language**: TypeScript
-- **Routing**: React Router 6
-- **State Management**: Zustand
-- **Forms**: React Hook Form + Zod
-- **HTTP Client**: Axios
-- **Notifications**: Sonner
-- **File Upload**: React Dropzone
-- **Icons**: Lucide React
+| Concern     | Technology     |
+| ----------- | -------------- |
+| Framework   | React 19       |
+| Build Tool  | Vite           |
+| Styling     | TailwindCSS    |
+| Routing     | React Router 6 |
+| State       | Zustand        |
+| HTTP Client | Axios          |
+| Icons       | Lucide React   |
 
-### DevOps
+### Infrastructure
 
-- **Containerization**: Docker + Docker Compose
-- **Database**: PostgreSQL 16 (production)
-- **Deployment**: Multi-stage production build
+- Docker + Docker Compose for production deployment
+- PostgreSQL 16 for production database
+- Multi-stage Dockerfile for minimal image size
 
-## Quick Start
-
-### Prerequisites
-
-- Node.js 20 or higher
-- npm or yarn
-- SQLite (development)
-- Docker (optional, for production)
-
-### Installation
-
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/hasancoded/ai-meeting-copilot.git
-cd ai-meeting-copilot
-```
-
-2. **Install backend dependencies**
-
-```bash
-cd server
-npm install
-```
-
-3. **Install frontend dependencies**
-
-```bash
-cd ../web
-npm install
-```
-
-4. **Configure backend environment**
-
-```bash
-cd server
-cp .env.development.example .env.development
-```
-
-Edit `.env.development` and set your configuration:
-
-```env
-PORT=4000
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-JWT_SECRET=your_32_character_secret_key_here
-DATABASE_URL="file:./dev.db"
-AI_PROVIDER=stub
-TRANSCRIBE_PROVIDER=stub
-```
-
-For production use with real AI providers, set:
-
-```env
-# For Google Gemini (recommended)
-AI_PROVIDER=gemini
-TRANSCRIBE_PROVIDER=gemini
-GEMINI_API_KEY=your-actual-gemini-api-key-here
-
-# OR for OpenAI
-AI_PROVIDER=openai
-TRANSCRIBE_PROVIDER=whisper
-OPENAI_API_KEY=your-actual-openai-api-key-here
-```
-
-5. **Configure frontend environment**
-
-```bash
-cd web
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```env
-VITE_API_URL=http://localhost:4000
-```
-
-6. **Run database migrations**
-
-```bash
-cd server
-npx prisma migrate dev
-```
-
-7. **Start the backend**
-
-```bash
-cd server
-npm run dev
-```
-
-Server runs on `http://localhost:4000`
-
-8. **Start the frontend** (in a separate terminal)
-
-```bash
-cd web
-npm run dev
-```
-
-Frontend runs on `http://localhost:5173`
-
-9. **Open your browser**
-
-Navigate to `http://localhost:5173` and start using the application!
-
-## Usage
-
-1. **Register** - Create an account with email and password
-2. **Login** - Authenticate and receive JWT cookie
-3. **Create Meeting** - Click "New Meeting" and enter a title
-4. **Upload Audio** - Drag and drop or select an audio/video file
-5. **Process Meeting** - Click "Process Meeting" to transcribe and analyze
-6. **View Results** - Navigate between tabs to see:
-   - Summary: AI-generated executive summary
-   - Transcript: Full meeting transcription
-   - Action Items: Extracted tasks with owners and due dates
-   - Decisions: Key decisions made during the meeting
-
-## Testing
-
-### Backend Tests
-
-```bash
-cd server
-npm test
-```
-
-All 36 tests should pass, covering:
-
-- Authentication flows
-- Meeting CRUD operations
-- File upload handling
-- Processing pipeline
-- User isolation
-- Error scenarios
-
-### Frontend Linting
-
-```bash
-cd web
-npm run lint
-```
-
-## Production Deployment
-
-### Using Docker
-
-1. **Configure production environment**
-
-```bash
-cp server/.env.production.example server/.env.production
-```
-
-Edit with production values (PostgreSQL connection, API keys, etc.)
-
-2. **Build and start with Docker Compose**
-
-```bash
-docker-compose up -d
-```
-
-3. **Check logs**
-
-```bash
-docker-compose logs -f server
-```
+---
 
 ## Project Structure
 
 ```
 ai-meeting-copilot/
 ├── docs/
-│   ├── API.md                                  # Complete API reference
-│   └── DETAILED_GUIDE.md                       # Comprehensive technical guide
+│   ├── API.md                   # Complete API reference
+│   └── DETAILED_GUIDE.md        # Deployment and technical guide
 ├── server/
 │   ├── prisma/
-│   │   ├── migrations/
-│   │   └── schema.prisma
-│   ├── src/
-│   │   ├── middleware/
-│   │   │   └── auth.ts
-│   │   ├── routes/
-│   │   │   ├── auth.ts
-│   │   │   ├── health.ts
-│   │   │   └── meetings.ts
-│   │   ├── services/
-│   │   │   ├── ai/
-│   │   │   │   ├── gemini.ts
-│   │   │   │   ├── openai.ts
-│   │   │   │   ├── provider.ts
-│   │   │   │   └── stub.ts
-│   │   │   └── transcription/
-│   │   │       ├── gemini-transcriber.ts
-│   │   │       ├── provider.ts
-│   │   │       ├── stub.ts
-│   │   │       └── whisper.ts
-│   │   ├── tests/
-│   │   ├── utils/
-│   │   ├── db.ts
-│   │   ├── env.ts
-│   │   ├── index.ts
-│   │   └── types.ts
-│   ├── .env.development.example
-│   ├── .env.production.example
-│   ├── jest.config.js
-│   ├── package.json
-│   └── tsconfig.json
+│   │   ├── migrations/          # Prisma migration history
+│   │   └── schema.prisma        # Database schema
+│   └── src/
+│       ├── middleware/
+│       │   └── auth.ts          # JWT authentication middleware
+│       ├── routes/
+│       │   ├── apiKey.ts        # API key management (save, delete, status)
+│       │   ├── auth.ts          # Register, login, logout
+│       │   ├── health.ts        # Health check
+│       │   └── meetings.ts      # Meeting CRUD, upload, process
+│       ├── services/
+│       │   ├── ai/
+│       │   │   ├── gemini.ts    # Google Gemini provider
+│       │   │   ├── openai.ts    # OpenAI provider
+│       │   │   ├── provider.ts  # AIProvider interface
+│       │   │   └── stub.ts      # Stub for development
+│       │   └── transcription/
+│       │       ├── gemini-transcriber.ts
+│       │       ├── provider.ts  # TranscriptionProvider interface
+│       │       ├── stub.ts
+│       │       └── whisper.ts
+│       ├── tests/
+│       │   ├── apiKey.test.ts
+│       │   ├── auth.test.ts
+│       │   ├── meetings.test.ts
+│       │   └── setup.ts
+│       ├── utils/
+│       │   ├── encryption.ts    # AES-256-GCM encrypt/decrypt
+│       │   ├── jwt.ts
+│       │   └── parsing.ts
+│       ├── db.ts                # Prisma client singleton
+│       ├── env.ts               # Validated environment variables (Zod)
+│       ├── index.ts             # Express app entry point
+│       └── types.ts             # Shared TypeScript types
 ├── web/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── ui/
-│   │   │   ├── CreateMeetingModal.tsx
-│   │   │   ├── FileDrop.tsx
-│   │   │   ├── Layout.tsx
-│   │   │   └── ProtectedRoute.tsx
-│   │   ├── lib/
-│   │   │   └── api.ts
-│   │   ├── pages/
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── Login.tsx
-│   │   │   ├── MeetingDetail.tsx
-│   │   │   └── Register.tsx
-│   │   ├── store/
-│   │   │   └── auth.ts
-│   │   ├── App.tsx
-│   │   ├── index.css
-│   │   └── main.tsx
-│   ├── .env.example
-│   ├── index.html
-│   ├── package.json
-│   ├── tailwind.config.js
-│   ├── tsconfig.json
-│   └── vite.config.ts
+│   └── src/
+│       ├── components/
+│       │   ├── ui/              # Button, Badge, Card, Spinner, etc.
+│       │   ├── CreateMeetingModal.tsx
+│       │   ├── DeleteMeetingModal.tsx
+│       │   ├── FileDrop.tsx
+│       │   ├── Layout.tsx
+│       │   └── ProtectedRoute.tsx
+│       ├── lib/
+│       │   └── api.ts           # Axios API client
+│       ├── pages/
+│       │   ├── Dashboard.tsx
+│       │   ├── Login.tsx
+│       │   ├── MeetingDetail.tsx
+│       │   ├── Register.tsx
+│       │   └── Settings.tsx     # API key and model configuration
+│       ├── store/
+│       │   └── auth.ts          # Zustand auth store
+│       ├── App.tsx
+│       ├── index.css
+│       └── main.tsx
 ├── .dockerignore
 ├── .gitignore
 ├── CONTRIBUTING.md
 ├── docker-compose.yml
 ├── Dockerfile
 ├── LICENSE
-├── package.json
+├── package.json                 # Workspace root
 └── README.md
 ```
 
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20 or higher
+- npm
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/hasancoded/ai-meeting-copilot.git
+cd ai-meeting-copilot
+cd server && npm install && cd ../web && npm install && cd ..
+```
+
+### 2. Configure the backend
+
+```bash
+cp server/.env.development.example server/.env.development
+```
+
+The minimum required values in `server/.env.development`:
+
+```env
+PORT=4000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+DATABASE_URL="file:./dev.db"
+
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET=your_jwt_secret_min_32_chars
+ENCRYPTION_SECRET=your_encryption_secret_min_32_chars
+
+# Use stub for development — no API key required
+AI_PROVIDER=stub
+TRANSCRIBE_PROVIDER=stub
+```
+
+### 3. Configure the frontend
+
+```bash
+cp web/.env.example web/.env
+# VITE_API_URL is already set to http://localhost:4000
+```
+
+### 4. Run database migrations
+
+```bash
+cd server
+DATABASE_URL="file:./dev.db" npx prisma migrate dev
+```
+
+### 5. Start the servers
+
+```bash
+# Terminal 1 — backend
+cd server && npm run dev
+
+# Terminal 2 — frontend
+cd web && npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+---
+
+## Usage
+
+1. **Register** — Create an account with email and password
+2. **Configure API Key** — Go to Settings, choose a provider (Gemini or OpenAI) and model, paste your API key
+3. **Create a Meeting** — Click "New Meeting" and enter a title
+4. **Upload Audio** — Drag and drop or select an audio/video file (max 100 MB)
+5. **Process Meeting** — Click "Process Meeting" to transcribe and analyze
+6. **View Results** — Switch between tabs for Summary, Transcript, Action Items, and Decisions
+
+> For development without an API key, leave `AI_PROVIDER=stub` and `TRANSCRIBE_PROVIDER=stub`. The stub provider returns realistic-looking synthetic data so the full UI can be exercised without incurring API costs.
+
+---
+
 ## API Endpoints
 
-See [docs/API.md](docs/API.md) for complete API documentation.
+Full documentation: [docs/API.md](docs/API.md)
 
 ### Authentication
 
-- `POST /api/auth/register` - Create account
-- `POST /api/auth/login` - Authenticate
-- `POST /api/auth/logout` - End session
+| Method | Path                 | Description    |
+| ------ | -------------------- | -------------- |
+| POST   | `/api/auth/register` | Create account |
+| POST   | `/api/auth/login`    | Authenticate   |
+| POST   | `/api/auth/logout`   | End session    |
 
 ### Meetings
 
-- `GET /api/meetings` - List user's meetings
-- `POST /api/meetings` - Create new meeting
-- `GET /api/meetings/:id` - Get meeting details
-- `POST /api/meetings/:id/upload` - Upload audio file
-- `POST /api/meetings/:id/process` - Transcribe and analyze
+| Method | Path                        | Description            |
+| ------ | --------------------------- | ---------------------- |
+| GET    | `/api/meetings`             | List user's meetings   |
+| POST   | `/api/meetings`             | Create meeting         |
+| GET    | `/api/meetings/:id`         | Get meeting details    |
+| POST   | `/api/meetings/:id/upload`  | Upload audio file      |
+| POST   | `/api/meetings/:id/process` | Transcribe and analyze |
+| DELETE | `/api/meetings/:id`         | Delete meeting         |
+
+### User Settings
+
+| Method | Path                       | Description                                  |
+| ------ | -------------------------- | -------------------------------------------- |
+| GET    | `/api/user/api-key/status` | Check API key status (never returns the key) |
+| PUT    | `/api/user/api-key`        | Save or update API key, provider, and model  |
+| DELETE | `/api/user/api-key`        | Remove saved API key                         |
 
 ### Health
 
-- `GET /api/health` - API status check
+| Method | Path          | Description      |
+| ------ | ------------- | ---------------- |
+| GET    | `/api/health` | API status check |
+
+---
 
 ## Environment Variables
 
-### Backend (server/.env)
+### Server (`server/.env.development` or `server/.env.production`)
 
-#### Required
+| Variable              | Required | Description                                                    |
+| --------------------- | -------- | -------------------------------------------------------------- |
+| `JWT_SECRET`          | Yes      | JWT signing secret — minimum 32 characters                     |
+| `ENCRYPTION_SECRET`   | Yes      | AES-256-GCM key for API key encryption — minimum 32 characters |
+| `DATABASE_URL`        | Yes      | Prisma database connection string                              |
+| `PORT`                | No       | Server port (default: `4000`)                                  |
+| `NODE_ENV`            | No       | `development` or `production`                                  |
+| `FRONTEND_URL`        | No       | CORS allowed origin (default: `http://localhost:5173`)         |
+| `AI_PROVIDER`         | No       | `stub`, `gemini`, or `openai` (default: `stub`)                |
+| `TRANSCRIBE_PROVIDER` | No       | `stub`, `gemini`, or `whisper` (default: `stub`)               |
 
-- `JWT_SECRET` - Secret key for JWT tokens (minimum 32 characters)
-- `DATABASE_URL` - Database connection string
+> `GEMINI_API_KEY` and `OPENAI_API_KEY` are not required at the server level. Each user supplies their own key through the Settings page. The server encrypts it with `ENCRYPTION_SECRET` before storing it in the database.
 
-#### Optional
+### Frontend (`web/.env`)
 
-- `PORT` - Server port (default: 4000)
-- `NODE_ENV` - Environment mode (default: development)
-- `FRONTEND_URL` - CORS origin (default: http://localhost:5173)
-- `AI_PROVIDER` - AI service (stub | openai | gemini, default: stub)
-- `TRANSCRIBE_PROVIDER` - Transcription service (stub | whisper | gemini, default: stub)
-- `OPENAI_API_KEY` - OpenAI API key (required if using openai providers)
-- `GEMINI_API_KEY` - Google Gemini API key (required if using gemini providers)
+| Variable       | Required | Description                                             |
+| -------------- | -------- | ------------------------------------------------------- |
+| `VITE_API_URL` | Yes      | Backend API base URL (default: `http://localhost:4000`) |
 
-### Frontend (web/.env)
+---
 
-#### Required
+## Testing
 
-- `VITE_API_URL` - Backend API URL (default: http://localhost:4000)
+```bash
+cd server
+npm test
+```
+
+48 tests covering authentication, meeting CRUD, file upload, processing pipeline, API key management, and error handling. Tests run against a dedicated in-memory SQLite database and use stub AI/transcription providers — no real API keys required.
+
+---
+
+## Production Deployment
+
+### Docker Compose
+
+```bash
+# Copy and edit production environment
+cp server/.env.production.example server/.env.production
+# Edit: set JWT_SECRET, ENCRYPTION_SECRET, DATABASE_URL, FRONTEND_URL
+# Leave AI_PROVIDER=gemini and TRANSCRIBE_PROVIDER=gemini (users supply their own keys)
+
+docker-compose up -d
+```
+
+### Manual checklist before going live
+
+- [ ] `JWT_SECRET` — unique, 64+ character hex value
+- [ ] `ENCRYPTION_SECRET` — unique, 64+ character hex value (if rotated, existing users must re-enter their key)
+- [ ] `DATABASE_URL` — PostgreSQL connection string
+- [ ] `FRONTEND_URL` — production frontend domain
+- [ ] `AI_PROVIDER` and `TRANSCRIBE_PROVIDER` set to `gemini` or `openai`
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- OpenAI for GPT-4o-mini and Whisper APIs
-- Google for Gemini AI
-- Prisma team for excellent ORM
-- Express.js community
-- React and Vite teams
-- TailwindCSS for utility-first CSS
-- Zustand for lightweight state management
-
-## Support
-
-For issues and questions:
-
-- Check [docs/API.md](docs/API.md) for API details
-- Review [docs/DETAILED_GUIDE.md](docs/DETAILED_GUIDE.md) for comprehensive technical documentation
-- Review backend tests for usage examples
+MIT — see [LICENSE](LICENSE).

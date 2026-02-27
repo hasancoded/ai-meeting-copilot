@@ -1,4 +1,3 @@
-// FILE: server/src/services/transcription/whisper.ts
 import { TranscriptionProvider } from "./provider";
 import { env } from "../../env";
 import fs from "fs";
@@ -8,13 +7,17 @@ export class WhisperTranscriber implements TranscriptionProvider {
   private apiKey: string;
   private apiUrl = "https://api.openai.com/v1/audio/transcriptions";
 
-  constructor() {
-    if (!env.OPENAI_API_KEY) {
+  /**
+   * @param apiKey - The user's decrypted API key. When provided this is always
+   *   used. Falls back to env only in development/stub contexts.
+   */
+  constructor(apiKey?: string) {
+    this.apiKey = apiKey ?? env.OPENAI_API_KEY ?? "";
+    if (!this.apiKey) {
       console.warn(
-        "OPENAI_API_KEY not set. Whisper transcription will fail. Set TRANSCRIBE_PROVIDER=stub for development.",
+        "No OpenAI API key provided. Set TRANSCRIBE_PROVIDER=stub for development.",
       );
     }
-    this.apiKey = env.OPENAI_API_KEY || "";
   }
 
   async transcribe({

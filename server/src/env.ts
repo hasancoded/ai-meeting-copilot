@@ -14,6 +14,7 @@ const EnvSchema = z.object({
   NODE_ENV: z.string().default("development"),
   JWT_SECRET: z.string().min(16),
   DATABASE_URL: z.string(),
+  ENCRYPTION_SECRET: z.string().min(32),
   AI_PROVIDER: z.enum(["stub", "openai", "gemini"]).default("stub"),
   OPENAI_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),

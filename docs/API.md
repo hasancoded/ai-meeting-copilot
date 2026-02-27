@@ -1,4 +1,4 @@
-# 📚 API Endpoints and Routes Documentation
+# API Reference
 
 ## Overview
 

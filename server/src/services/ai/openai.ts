@@ -1,20 +1,25 @@
-// FILE: server/src/services/ai/openai.ts
 import { AIProvider, AIOutputs } from "./provider";
 import { env } from "../../env";
 
 export class OpenAIProvider implements AIProvider {
   private apiKey: string;
+  private model: string;
   private apiUrl = "https://api.openai.com/v1/chat/completions";
   private maxRetries = 3;
   private retryDelay = 1000; // milliseconds
 
-  constructor() {
-    if (!env.OPENAI_API_KEY) {
+  /**
+   * @param apiKey - The user's decrypted API key.
+   * @param model  - The model name selected by the user (e.g. "gpt-4o-mini", "gpt-4o").
+   */
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey ?? env.OPENAI_API_KEY ?? "";
+    this.model = model ?? "gpt-4o-mini";
+    if (!this.apiKey) {
       console.warn(
-        "OPENAI_API_KEY not set. AI summarization will fail. Set AI_PROVIDER=stub for development.",
+        "No OpenAI API key provided. Set AI_PROVIDER=stub for development.",
       );
     }
-    this.apiKey = env.OPENAI_API_KEY || "";
   }
 
   private async sleep(ms: number): Promise<void> {
@@ -61,7 +66,7 @@ Transcript: ${transcript}`;
             Authorization: `Bearer ${this.apiKey}`,
           },
           body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: this.model,
             messages: [
               {
                 role: "system",

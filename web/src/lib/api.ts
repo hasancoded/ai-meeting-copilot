@@ -53,6 +53,12 @@ export interface ErrorResponse {
   details?: unknown;
 }
 
+export interface ApiKeyStatus {
+  saved: boolean;
+  provider: "openai" | "gemini" | null;
+  model: string | null;
+}
+
 // Create axios instance with default config
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:4000",
@@ -169,6 +175,26 @@ export const meetingsApi = {
 
   delete: async (id: number): Promise<void> => {
     await api.delete(`/api/meetings/${id}`);
+  },
+};
+
+// API Key Management API
+export const apiKeyApi = {
+  getStatus: async (): Promise<ApiKeyStatus> => {
+    const { data } = await api.get<ApiKeyStatus>("/api/user/api-key/status");
+    return data;
+  },
+
+  save: async (
+    key: string,
+    provider: "openai" | "gemini",
+    model: string,
+  ): Promise<void> => {
+    await api.put("/api/user/api-key", { key, provider, model });
+  },
+
+  remove: async (): Promise<void> => {
+    await api.delete("/api/user/api-key");
   },
 };
 

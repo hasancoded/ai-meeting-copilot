@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { meetingsApi, Meeting } from "@/lib/api";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { meetingsApi, apiKeyApi, ApiKeyStatus, Meeting } from "@/lib/api";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -18,6 +18,7 @@ import {
   Calendar,
   User,
   Trash2,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,9 +35,11 @@ export const MeetingDetail = () => {
   const [activeTab, setActiveTab] = useState<TabId>("summary");
   const [deleteModal, setDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [keyStatus, setKeyStatus] = useState<ApiKeyStatus | null>(null);
 
   useEffect(() => {
     loadMeeting();
+    loadKeyStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -49,6 +52,15 @@ export const MeetingDetail = () => {
       // Error handled by interceptor
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadKeyStatus = async () => {
+    try {
+      const data = await apiKeyApi.getStatus();
+      setKeyStatus(data);
+    } catch {
+      // Non-fatal — if status fetch fails, we don't block the page
     }
   };
 
@@ -239,6 +251,30 @@ export const MeetingDetail = () => {
           </Card>
         )}
 
+        {/* API Key Banner (if no key saved and audio present) */}
+        {meeting.audioPath &&
+          !meeting.summary &&
+          keyStatus &&
+          !keyStatus.saved && (
+            <div className="mb-6 flex items-start space-x-3 rounded-lg border border-warning-200 bg-warning-50 p-4">
+              <ShieldAlert className="h-5 w-5 flex-shrink-0 text-warning-600 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold text-warning-800">
+                  No API key configured
+                </p>
+                <p className="text-warning-700 mt-0.5">
+                  You need to save an API key before you can process meetings.{" "}
+                  <Link
+                    to="/settings"
+                    className="underline font-medium hover:text-warning-900"
+                  >
+                    Go to Settings →
+                  </Link>
+                </p>
+              </div>
+            </div>
+          )}
+
         {/* Process Button (if audio uploaded but not processed) */}
         {meeting.audioPath && !meeting.summary && (
           <Card className="mb-6">
@@ -255,7 +291,9 @@ export const MeetingDetail = () => {
                 <Button
                   onClick={handleProcess}
                   isLoading={isProcessing}
-                  disabled={isProcessing}
+                  disabled={
+                    isProcessing || (keyStatus !== null && !keyStatus.saved)
+                  }
                   className="flex items-center space-x-2"
                 >
                   <PlayCircle className="h-5 w-5" />

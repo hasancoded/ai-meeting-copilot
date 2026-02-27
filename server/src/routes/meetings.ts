@@ -1,4 +1,3 @@
-// FILE: server/src/routes/meetings.ts
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db";
@@ -7,6 +6,7 @@ import path from "path";
 import fs from "fs";
 import { requireAuth } from "../middleware/auth";
 import { env } from "../env";
+import { getUserApiKey } from "./apiKey";
 import { StubProvider } from "../services/ai/stub";
 import { OpenAIProvider } from "../services/ai/openai";
 import { GeminiProvider } from "../services/ai/gemini";
@@ -60,15 +60,17 @@ const idParamSchema = z.object({
   id: z.string().regex(/^\d+$/, "Invalid meeting ID"),
 });
 
-function getAI() {
-  if (env.AI_PROVIDER === "openai") return new OpenAIProvider();
-  if (env.AI_PROVIDER === "gemini") return new GeminiProvider();
+function getAI(apiKey?: string, model?: string) {
+  if (env.AI_PROVIDER === "openai") return new OpenAIProvider(apiKey, model);
+  if (env.AI_PROVIDER === "gemini") return new GeminiProvider(apiKey, model);
   return new StubProvider();
 }
 
-function getTranscriber() {
-  if (env.TRANSCRIBE_PROVIDER === "whisper") return new WhisperTranscriber();
-  if (env.TRANSCRIBE_PROVIDER === "gemini") return new GeminiTranscriber();
+function getTranscriber(apiKey?: string, model?: string) {
+  if (env.TRANSCRIBE_PROVIDER === "whisper")
+    return new WhisperTranscriber(apiKey);
+  if (env.TRANSCRIBE_PROVIDER === "gemini")
+    return new GeminiTranscriber(apiKey, model);
   return new StubTranscriber();
 }
 
@@ -254,6 +256,20 @@ meetings.post("/:id/process", async (req, res) => {
       });
     }
 
+    // Enforce per-user API key for non-stub providers.
+    // Read from process.env directly so test overrides take effect.
+    const isStub =
+      (process.env.AI_PROVIDER ?? env.AI_PROVIDER) === "stub" &&
+      (process.env.TRANSCRIBE_PROVIDER ?? env.TRANSCRIBE_PROVIDER) === "stub";
+    const userApiKey = isStub ? null : await getUserApiKey(userId);
+
+    if (!isStub && !userApiKey) {
+      return res.status(403).json({ error: "No API key configured" });
+    }
+
+    const apiKeyValue = userApiKey?.key;
+    const modelValue = userApiKey?.model;
+
     const absolutePath = path.join(process.cwd(), "server", meeting.audioPath);
     if (!fs.existsSync(absolutePath)) {
       return res.status(400).json({
@@ -264,7 +280,7 @@ meetings.post("/:id/process", async (req, res) => {
     // Step 1: Transcribe audio
     let transcriptText: string;
     try {
-      const transcriber = getTranscriber();
+      const transcriber = getTranscriber(apiKeyValue, modelValue);
       const { text } = await transcriber.transcribe({ filePath: absolutePath });
       transcriptText = text;
     } catch (transcribeError: any) {
@@ -278,7 +294,7 @@ meetings.post("/:id/process", async (req, res) => {
     // Step 2: AI analysis
     let aiOutput;
     try {
-      const ai = getAI();
+      const ai = getAI(apiKeyValue, modelValue);
       aiOutput = await ai.summarizeAndExtract({
         transcript: transcriptText,
         title: meeting.title,

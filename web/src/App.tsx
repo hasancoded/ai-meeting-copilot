@@ -5,6 +5,7 @@ import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
 import { Dashboard } from "@/pages/Dashboard";
 import { MeetingDetail } from "@/pages/MeetingDetail";
+import { Settings } from "@/pages/Settings";
 import { useAuthStore } from "@/store/auth";
 
 function App() {
@@ -38,6 +39,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MeetingDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />

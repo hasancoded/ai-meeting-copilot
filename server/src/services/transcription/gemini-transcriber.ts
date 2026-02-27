@@ -1,4 +1,3 @@
-// FILE: server/src/services/transcription/gemini-transcriber.ts
 import { TranscriptionProvider } from "./provider";
 import { env } from "../../env";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -7,17 +6,23 @@ import path from "path";
 
 export class GeminiTranscriber implements TranscriptionProvider {
   private apiKey: string;
+  private model: string;
   private genAI: GoogleGenerativeAI;
   private maxRetries = 3;
   private retryDelay = 1000; // milliseconds
 
-  constructor() {
-    if (!env.GEMINI_API_KEY) {
+  /**
+   * @param apiKey - The user's decrypted API key.
+   * @param model  - The model name selected by the user (e.g. "models/gemini-2.5-flash").
+   */
+  constructor(apiKey?: string, model?: string) {
+    this.apiKey = apiKey ?? env.GEMINI_API_KEY ?? "";
+    this.model = model ?? "models/gemini-2.5-flash";
+    if (!this.apiKey) {
       console.warn(
-        "GEMINI_API_KEY not set. Gemini transcription will fail. Set TRANSCRIBE_PROVIDER=stub for development.",
+        "No Gemini API key provided. Set TRANSCRIBE_PROVIDER=stub for development.",
       );
     }
-    this.apiKey = env.GEMINI_API_KEY || "";
     this.genAI = new GoogleGenerativeAI(this.apiKey);
   }
 
@@ -72,7 +77,7 @@ export class GeminiTranscriber implements TranscriptionProvider {
       for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
         try {
           const model = this.genAI.getGenerativeModel({
-            model: "models/gemini-2.5-flash",
+            model: this.model,
           });
 
           const result = await model.generateContent([

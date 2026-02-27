@@ -199,10 +199,10 @@ describe("Meeting Routes", () => {
     });
 
     it("should require authentication", async () => {
-      await request(app)
-        .post(`/api/meetings/${meetingId}/upload`)
-        .attach("audio", testAudioPath)
-        .expect(401);
+      // Do not attach a file — the server rejects unauthenticated requests
+      // before multer reads the body. Uploading a file here causes ECONNRESET
+      // because the server closes the socket mid-stream.
+      await request(app).post(`/api/meetings/${meetingId}/upload`).expect(401);
     });
 
     it("should fail with invalid meeting ID", async () => {
@@ -318,6 +318,27 @@ describe("Meeting Routes", () => {
         .expect(400);
 
       expect(response.body.error).toContain("audio");
+    });
+
+    it("should return 403 when non-stub provider is configured and no API key is saved", async () => {
+      // Temporarily switch env to non-stub to trigger the guard
+      const originalAI = process.env.AI_PROVIDER;
+      const originalTranscribe = process.env.TRANSCRIBE_PROVIDER;
+      process.env.AI_PROVIDER = "gemini";
+      process.env.TRANSCRIBE_PROVIDER = "gemini";
+
+      try {
+        const response = await request(app)
+          .post(`/api/meetings/${meetingId}/process`)
+          .set("Cookie", authCookie)
+          .expect(403);
+
+        expect(response.body).toHaveProperty("error", "No API key configured");
+      } finally {
+        // Always restore env values
+        process.env.AI_PROVIDER = originalAI;
+        process.env.TRANSCRIBE_PROVIDER = originalTranscribe;
+      }
     });
   });
 
