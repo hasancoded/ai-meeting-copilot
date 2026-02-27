@@ -10,11 +10,23 @@ import { apiKey } from "./routes/apiKey";
 
 const app = express();
 
-// CORS - allow frontend origin
-const allowedOrigin = process.env.FRONTEND_URL ?? "http://localhost:5173";
+// CORS — support comma-separated list of allowed origins
+// e.g. FRONTEND_URL=https://app.vercel.app,http://localhost:5173
+const allowedOrigins = (process.env.FRONTEND_URL ?? "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, Postman, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin '${origin}' not allowed`));
+      }
+    },
     credentials: true,
   }),
 );
@@ -23,7 +35,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Serve uploaded audio files: accessible at http://localhost:4000/uploads/<filename>
+// Serve uploaded audio files at /uploads/<filename>
 app.use(
   "/uploads",
   express.static(path.join(process.cwd(), "server", "uploads")),
@@ -35,7 +47,7 @@ app.use("/api/auth", auth);
 app.use("/api/meetings", meetings);
 app.use("/api/user", apiKey);
 
-// Root health check
+// Root info endpoint
 app.get("/", (_req, res) => {
   res.json({
     ok: true,
@@ -66,7 +78,7 @@ const port = Number(env.PORT);
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
   console.log(`Health check: http://localhost:${port}/api/health`);
-  console.log(`Database: ${env.DATABASE_URL}`);
+  console.log(`Allowed origins: ${allowedOrigins.join(", ")}`);
   console.log(`AI Provider: ${env.AI_PROVIDER}`);
   console.log(`Transcription Provider: ${env.TRANSCRIBE_PROVIDER}`);
 });

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, CookieOptions } from "express";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "../db";
@@ -22,6 +22,20 @@ const loginSchema = z.object({
     .min(6, { message: "Password must be at least 6 characters" }),
 });
 
+/**
+ * Returns consistent cookie options for set and clear operations.
+ * Cross-origin (Vercel → Railway) requires sameSite=none + secure=true.
+ */
+function cookieOptions(): CookieOptions {
+  const isProd = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+  };
+}
+
 // POST /api/auth/register
 auth.post("/register", async (req, res) => {
   try {
@@ -44,17 +58,12 @@ auth.post("/register", async (req, res) => {
     });
 
     const token = signJwt({ id: user.id, email: user.email });
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
+    res.cookie("token", token, cookieOptions());
 
     return res.status(200).json({ id: user.id, email: user.email });
   } catch (err: any) {
     console.error("Register error:", err);
 
-    // Handle Zod validation errors cleanly
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: err.errors[0].message });
     }
@@ -81,11 +90,7 @@ auth.post("/login", async (req, res) => {
     }
 
     const token = signJwt({ id: user.id, email: user.email });
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? true : false,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    });
+    res.cookie("token", token, cookieOptions());
 
     return res.status(200).json({
       token,
@@ -104,6 +109,8 @@ auth.post("/login", async (req, res) => {
 
 // POST /api/auth/logout
 auth.post("/logout", (req, res) => {
-  res.clearCookie("token");
+  // clearCookie must receive the same options as the original Set-Cookie
+  // so the browser knows which cookie to invalidate
+  res.clearCookie("token", cookieOptions());
   return res.status(200).json({ message: "Logged out" });
 });
