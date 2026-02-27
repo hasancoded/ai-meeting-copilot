@@ -1,4 +1,3 @@
-# FILE: Dockerfile
 # Multi-stage build for production optimization
 
 # Stage 1: Build
@@ -53,6 +52,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Run migrations and start server
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
 
-# Commit message: chore(docker): add production Dockerfile with multi-stage build
-# PR title: chore: Add optimized production Dockerfile
-# Notes: Multi-stage build separates build and runtime. Generates Prisma client, builds TypeScript, installs production deps only. Includes health check. Runs migrations on startup. Creates uploads directory. Uses Node 20 Alpine for minimal image size.
